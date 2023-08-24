@@ -1,0 +1,38 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v2
+
+      # ... other build steps ...
+
+      - name: Calculate Next Version
+        id: calculate_version
+        run: |
+          chmod +x calculate_next_version.sh
+          NEXT_VERSION=$(./calculate_next_version.sh)
+          echo "::set-output name=next_version::$NEXT_VERSION"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.calculate_version.outputs.next_version }}
+          release_name: your_app Release
+          draft: false
+          prerelease: false
+
